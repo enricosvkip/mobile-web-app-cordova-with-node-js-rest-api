@@ -1,4 +1,4 @@
-# mobile-web-app-with-node-api-rest
+# mobile-web-app-with-node-api-rest-and-cors
 
 
 # 1- Installation Node.js to ubuntu
