@@ -1,0 +1,863 @@
+﻿
+
+<html>
+<head>
+    <script src="scripts/jquery-3.3.1.js"></script>
+    <!-- <script src="scripts/jquery-3.3.1.slim.js"></script>-->
+    <!-- <script src="scripts/umd/popper.js"></script>-->
+
+    <script src="scripts/bootstrap.js"></script>
+
+
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+
+    <link rel="stylesheet" type="text/css" href="css/custom.css" />
+
+
+    <!--<script src="scripts/script.js"></script>-->
+    <!--
+        Customize the content security policy in the meta tag below as needed. Add 'unsafe-inline' to default-src to enable inline JavaScript.
+        For details, see http://go.microsoft.com/fwlink/?LinkID=617521
+    -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *">-->
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+    <!--<link rel="stylesheet" type="text/css" href="css/index.css">-->
+    <!--<link rel="stylesheet" type="text/css" href="css/jquery.mobile-1.4.5.css" />-->
+    <title>BlankCordovaApp5</title>
+
+    <script>
+        'use strict';
+        $(document).ready(function () {
+            //config
+            var tokenUser;
+            var userID = null;
+            var nodeApiUrl = "192.168.1.10";
+            var urlPort = "1337";
+            var signUpPanel = $("#signUpPanel");
+            var signInPanel = $("#signInPanel");
+            var navLoginBut = $("#navLogin");
+            var loginBut = $("#loginBut");
+            var usernameValue = $("#userNamep");
+            var toolbar = $("#toolbar");
+            var createPostBtn = $('#createPostBtn');
+            var signUpButTool = $('#signupBtnTool');
+            var signUpFbBtn = $('#signUpFbBtn');
+            var myPostsBtn = $('#myPostsBtn');
+            var myPostsCount = $('#myPostsCount');
+            var logOutBut = $('#logOutBut');
+            var myDiv = $('#myDiv');
+            var createPostForm = $('#createPostForm');
+            var draftChecked = $("#draftChecked");
+            var sendPost = $("#sendPost");
+            var isPublic = false;
+            var isRemoved = false;
+            var commentOpen = true;
+            var commentisPublic = true;
+            var commentisRemoved = false;
+            var myPostsDiv = $('#myPostsDiv');
+            //update form
+            var updatePostForm = $('#updatePostForm');
+            var postID = $('#postID');
+            var draftCheckedUpdate = $('#draftCheckedUpdate');
+            var postHeader = $('#postHeader');
+            var postContent = $('#postContent');
+            var updatePost = $('#updatePost');
+            var postUpdateHeader;
+            var postUpdateContent;
+            usernameValue.hide();
+            createPostBtn.hide();
+            myPostsBtn.hide();
+            signUpPanel.hide();
+            signInPanel.hide();
+            createPostForm.hide();
+            logOutBut.hide();
+            updatePostForm.hide();
+            $('#mainPosts').hide();
+            $('#commentPanel').hide();
+            $('#postView').hide();
+            var commentingBlogID;
+            var commentingBlogOwnerID;
+
+            //end of config
+            //
+            //asyncFunc begin
+            function asyncFunc() {
+
+                $.ajax({
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/user",
+                    beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                })
+                    .done(function (postMsg) {
+                        myDiv.empty();
+                        //$('#myDiv').html(postMsg.authData.id);
+                        usernameValue.html(postMsg.authData.userN);
+                        userID = postMsg.authData.id;
+                        console.log(postMsg.authData.id);
+
+                    });
+                //counterPost
+                $.ajax({
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/counterpost",
+                    beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                })
+                    .done(function (postMsg) {
+                        myDiv.empty();
+                        //$('#myDiv').html(postMsg.authData.id);
+                        myPostsCount.html("-" + postMsg.countPost);
+
+                        //console.log(postMsg.authData.id);
+
+                    });
+
+            }//asyncFunc end
+           
+            signUpButTool.click(function () {
+
+                signUpPanel.show();
+                signInPanel.hide();
+                $('#letMeIn').click(function () {
+                    var isvalidate = signUpPanel[0].checkValidity();
+                    if (!isvalidate) {
+                        event.preventDefault();
+                        console.log("olmadı");
+                    }
+                    else {
+                        signUP();
+
+                    }
+                    //
+                });
+
+
+            });
+            function signUP() {
+                var userName = $('#usernameReg').val();
+                var userEmail = $('#emailReg').val();
+                var password = $('#passwordReg').val();
+
+                $.ajax({
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/registeruser",
+                    crossDomain: true,
+                    data: { userName: userName, userEmail: userEmail, password: password }
+
+                }).done(function (msg) {
+                    console.log(msg);
+
+                  
+                    console.log(userName, password);
+                    // loginBut.trigger("click");
+                });
+            }
+            function logIN() {
+
+                $.ajax({
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/login",
+                    crossDomain: true,
+                    data: { username: $('#username').val(), password: $('#password').val() }
+
+                })
+                    .done(function (msg) {
+                        tokenUser = msg.token;
+                        asyncFunc();
+                        setInterval(asyncFunc, 5000);
+                        console.log(tokenUser);
+                        signUpButTool.hide();
+                        signUpFbBtn.hide();
+                        navLoginBut.hide();
+                        createPostBtn.show();
+                        myPostsBtn.show();
+                        $('#mainPosts').show();
+                        //myPosts.show();
+                        logOutBut.show();
+                        // toolbar.empty();
+                        //toolbar.load("index.html #userNamep");
+                        usernameValue.show();
+                        myDiv.hide();
+
+
+
+                    });
+            }
+            navLoginBut.click(function () {
+                signUpPanel.hide();
+                signInPanel.show();
+                $('#username').val();
+                $('#password').val();
+                loginBut.click(function () {
+
+                    logIN();
+                });
+            });
+
+            sendPost.click(function () {
+                $.ajax({
+                    async: true,
+                    cache: true,
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/createpost",
+                    crossDomain: true,
+                    enctype: 'multipart/form-data',
+                    data: { isPublic: isPublic, blogHeader: $('#postHeader').val(), blogContent: $('#postContent').val(), sampleFile: $('#sampleFile').val(), removed: "false", comment: commentOpen },
+                    beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                })
+                    .done(function (msg) {
+
+                        console.log(msg);
+                        createPostForm.hide();
+                        myPostsDiv.show();
+                        myPostsBtn.trigger("click");
+
+                        asyncFunc();
+                    });
+            });
+            myPostsBtn.click(function () {
+                $.ajax({
+                    async: true,
+                    cache: true,
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/myposts",
+                    crossDomain: true,
+                    enctype: 'multipart/form-data',
+
+                    beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                })
+                    .done(function (mypostsjson) {
+                        console.log(mypostsjson);
+                        myPostsDiv.empty();
+                        myPostsDiv.show();
+                        //var post = mypostsjson;
+                        // console.log(post.myposts[3].blogId);
+
+                        //$('#mypostsTable').empty();
+                        createPostForm.hide();
+                        $('#publicPosts').hide();
+                        $('#commentPanel').hide();
+                        $('#postView').hide();
+                        for (var i = 0; i < mypostsjson.myposts.length; i++) {
+                            var badgetext;
+                            var classLabel;
+                            if (mypostsjson.myposts[i].isPublic === 'true') {
+                                badgetext = "Public";
+                                classLabel = "success";
+                            }
+                            else {
+                                badgetext = "Draft";
+                                classLabel = "warning";
+                            }
+                            var postsID = $('<a href="#" class="list-group-item" id="' + mypostsjson.myposts[i].blogId + '">' + mypostsjson.myposts[i].blogHeader + '<span class="badge badge-' + classLabel + '">' + badgetext + '</span></a>');
+
+                            var clicked;
+
+                            myPostsDiv.append(postsID.click(function (event) {
+
+                                //openening update form with value
+                                //myPostsDiv.hide();
+                                //updatePostForm.show();
+                                console.log(event.target.id);
+                                clicked = event.target.id;
+                                //alert(dataPosts[3].blogContent);
+                                console.log(clicked);
+
+                                for (var i = 0; i < mypostsjson.myposts.length; i++) {
+                                    if (mypostsjson.myposts[i].blogId === parseInt(event.target.id)) {
+                                        console.log(mypostsjson.myposts[i].blogContent);
+                                        postID = mypostsjson.myposts[i].blogId;
+                                        isPublic = mypostsjson.myposts[i].isPublic;
+                                        commentOpen = mypostsjson.myposts[i].commentOpen;
+                                        postUpdateHeader = mypostsjson.myposts[i].blogHeader;
+                                        postUpdateContent = mypostsjson.myposts[i].blogContent;
+                                        // sampleFileUpdate = mypostsjson.myposts[i].attach;
+                                        console.log(postID);
+                                        $('#postUpdateHeader').val(postUpdateHeader);
+                                        $('#updatingHeader').html(postUpdateHeader);
+                                        $('#postUpdateContent').val(postUpdateContent);
+
+                                        updatePostForm.show();
+                                        
+                                        
+                                    }
+                                }
+                            }));
+                        }
+                    });
+
+            });
+            logOutBut.click(function () {
+                $.ajax({
+                    async: true,
+
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/logout",
+                    crossDomain: true,
+
+                    beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                })
+                    .done(function (msg) {
+                        console.log(msg);
+                        createPostForm.hide();
+                        myPostsDiv.empty();
+                        myPostsDiv.hide();
+                        window.location.reload();
+
+                    });
+            });
+
+            $('#clearbutton').click(function () {
+                $('.app').empty();
+            });
+            $('#addhtml').click(function () {
+                $('.app').load("register.html #login-form");
+            });
+
+            createPostBtn.click(function () {
+                createPostForm.show();
+                myDiv.hide();
+                myPostsDiv.hide();
+                isPublic = false;
+                $('#publicPosts').hide();
+                $('#commentPanel').hide();
+                $('#postView').hide();
+            });
+            $('#commentCheckedUpdate').change(function () {
+                if ($(this).prop('checked')) {
+                    commentOpen = true;
+                    console.log(commentOpen);
+                } else {
+                    commentOpen = false;
+                    console.log(commentOpen);
+                }
+
+            });
+            $('#commentChecked').change(function () {
+                if ($(this).prop('checked')) {
+                    commentOpen = true;
+                    console.log(commentOpen);
+                } else {
+                    commentOpen = false;
+                    console.log(commentOpen);
+                }
+
+            });
+            draftChecked.change(function () {
+                if ($(this).prop('checked')) {
+                    isPublic = false;
+                    console.log(isPublic);
+                } else {
+                    isPublic = true;
+                    console.log(isPublic);
+                }
+
+            });
+            draftCheckedUpdate.change(function () {
+                if ($(this).prop('checked')) {
+                    isPublic = false;
+                    console.log(isPublic);
+                } else {
+                    isPublic = true;
+                    console.log(isPublic);
+                }
+
+            });
+            $('#cancelUpdatePost').click(function () {
+                $('#updatePostForm').hide();
+            });
+            $('#cancelCreatePost').click(function () {
+                $('#createPostForm').hide();
+            });
+            updatePost.click(function () {
+                $.ajax({
+
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/updateposts",
+                    crossDomain: true,
+                    enctype: 'multipart/form-data',
+                    data: { isPublic: isPublic, blogHeader: $('#postUpdateHeader').val(), blogContent: $('#postUpdateContent').val(), sampleFile: $('#sampleFile').val(), removed: isRemoved, blogId: postID, comment: commentOpen },
+                    beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                })
+                    .done(function (msg) {
+                        console.log(msg);
+                        $('#updatePostForm').hide();
+                        myPostsDiv.show();
+                        isRemoved = false;
+                        myPostsBtn.trigger("click");
+                    });
+
+
+
+                console.log(postID, postUpdateHeader, postUpdateContent, isPublic);
+            });
+            $('#DeletePost').click(function () {
+
+                isRemoved = true;
+                updatePost.trigger("click");
+                myPostsBtn.trigger("click");
+                asyncFunc();
+                console.log(isRemoved);
+            });
+            $('#mainPosts').click(function () {
+                myPostsDiv.hide();
+                $('#createPostForm').hide();
+                $('#publicPosts').show();
+                updatePostForm.hide();
+                $.ajax({
+
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/postspublic",
+                    crossDomain: true,
+                    enctype: 'multipart/form-data',
+
+                    beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                })
+                    .done(function (postspublic) {
+                        console.log(postspublic);
+                        $('#publicPosts').empty();
+
+
+
+
+                        for (var i = 0; i < postspublic.publicPosts.length; i++) {
+
+                            var postsPublicID = $('<a href="#" class="list-group-item" id="' + postspublic.publicPosts[i].blogId + '">' + postspublic.publicPosts[i].blogHeader + '<span class="badge badge-success">:Author: ->' + postspublic.publicPosts[i].userN + '</span></a>');
+
+                            var clickedPP;
+
+                            $('#publicPosts').append(postsPublicID.click(function (event) {
+                                //openening update form with value
+                                //myPostsDiv.hide();
+                                //updatePostForm.show();
+                                //console.log(event.target.id);
+                                clickedPP = event.target.id;
+                                //alert(dataPosts[3].blogContent);
+                                console.log(clickedPP);
+                                $('#createPostForm').hide();
+                                for (var i = 0; i < postspublic.publicPosts.length; i++) {
+                                    if (postspublic.publicPosts[i].blogId === parseInt(event.target.id)) {
+                                        console.log(postspublic.publicPosts[i].blogContent, postspublic.publicPosts[i].blogHeader, postspublic.publicPosts[i].blogId);
+                                        console.log(userID);
+                                        $('#postViewHeader').html('<span><b>Header:</b></span>' + postspublic.publicPosts[i].blogHeader);
+                                        $('#postViewContent').html('<span><b>Content:</b></span>' + postspublic.publicPosts[i].blogHeader);
+                                        commentingBlogID = postspublic.publicPosts[i].blogId;
+                                        commentingBlogOwnerID = postspublic.publicPosts[i].userId;
+                                        // var commentsareOpen = postspublic.publicPosts[i].comment;
+                                        if (postspublic.publicPosts[i].comment === 'true') {
+
+
+                                            $('#commentPanel').show();
+                                            $('#addingComment').show();
+
+                                            $('#postView').show();
+                                            $('#updateCommentFormBut').hide();
+                                            $('#commentContent').val('');
+                                            $('#sendComment').show();
+                                            $('#CommentPublic').show();
+                                            //$('#CommentDelete').hide();
+                                            viewComments();
+
+                                        }
+                                        else {
+                                            console.log("kapalı");
+
+                                            $('#commentPanel').hide();
+                                            $('#addingComment').hide();
+
+                                            $('#postView').show();
+                                            // viewComments();
+
+                                        }
+
+                                        //postPublicID = postspublic.publicPosts[i].blogId;
+                                        /* isPublic = postspublic.publicPosts[i].isPublic;
+                                         commentOpen = postspublic.publicPosts[i].commentOpen;
+                                         postUpdateHeader = postspublic.publicPosts[i].blogHeader;
+                                         postUpdateContent = mypostsjson.myposts[i].blogContent;
+                                         sampleFileUpdate = mypostsjson.myposts[i].attach;
+                                         console.log(postID);
+                                         $('#postUpdateHeader').val(postUpdateHeader);
+                                         $('#updatingHeader').html(postUpdateHeader);
+                                         $('#postUpdateContent').val(postUpdateContent);
+                                         updatePostForm.show();
+                                         */
+                                    }
+                                }
+                            }));
+
+                        }
+                    });
+            });
+            function sendComment() {
+                $.ajax({
+
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/createcomment",
+                    crossDomain: true,
+                    enctype: 'multipart/form-data',
+                    data: { blogId: commentingBlogID, commentPublic: commentisPublic, commentText: $('#commentContent').val(), commentRemoved: 'false', blogOwnerID: commentingBlogOwnerID },
+                    beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                })
+                    .done(function (commentSend) {
+                        console.log(commentSend);
+                        $('#addingComment').hide();
+                        viewComments();
+                    });
+            }
+            function viewComments() {
+                $.ajax({
+
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/comments",
+                    crossDomain: true,
+                    enctype: 'multipart/form-data',
+                    data: { blogID: commentingBlogID },
+                    beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                })
+                    .done(function (comments) {
+                        console.log(comments);
+                        /*
+                        <div id="commentViewContent" class="panel-body bg-light text-dark p-3">by:<span id="commentOwner" class="badge badge-success">Falanca</span>
+
+          <button id="CommentUpdate" class="btn btn-warning btn-sm">Update</button>
+          <button id="CommentDelete" class="btn btn-danger btn-sm">Delete</button>
+          <button id="CommentPublicChange" class="btn btn-info btn-sm">public</button>
+      </div>
+
+                        */
+                        $('#commentView').empty();
+                        for (var i = 0; i < comments.Comments.length; i++) {
+                            var CommentViewIsPublic = "Public";
+
+                            if (comments.Comments[i].isPublic === 'true') {
+                                CommentViewIsPublic = "its Public";
+                            }
+                            else {
+                                CommentViewIsPublic = "not Public";
+                            }
+                            var commentViewContentDiv = $('<div id="commentViewContent" class="panel-body bg-light text-dark p-3">' + comments.Comments[i].commentText + 'says :-><span id="commentOwner" class="badge badge-success">' + comments.Comments[i].userN + '</span>');
+                            var commentViewYouDiv = $('<div id="commentViewContent" class="panel-body bg-light text-dark p-3">' + comments.Comments[i].commentText + '<span id="commentOwner" class="badge badge-success">YOU</span>');
+                            var commentViewUpdateButton = $('<button id= "CommentUpdate"  class="btn btn-warning btn-sm"> Update</button>').on("click", { updatingCommentID: comments.Comments[i].commentID, updatingCommentText: comments.Comments[i].commentText, updatingCommentIsPublic: comments.Comments[i].isPublic, updatingCommentIsRemoved: comments.Comments[i].removed }, updateButComment);
+                            var commentViewDeleteButton = $('<button id="CommentDelete" class="btn btn-danger btn-sm" >Delete</button>').on("click", { deletingCommentID: comments.Comments[i].commentID }, deleteButComment);
+
+                            var commentViewPublicButton = $('<button id="CommentPublicChange" class="btn btn-info btn-sm">' + CommentViewIsPublic + '</button>').on("click", { updatingCommentID: comments.Comments[i].commentID, updatingCommentText: comments.Comments[i].commentText, setCommentPublic: comments.Comments[i].isPublic, updatingCommentIsRemoved: 'false' }, setPublic);
+
+                            var commentViewContentEndDiv = $('</div >');
+
+
+                            if (userID === comments.Comments[i].commenterID) {
+                                $('#commentView').append(commentViewYouDiv, commentViewUpdateButton, commentViewDeleteButton, commentViewPublicButton, commentViewContentEndDiv);
+                            }
+                            else if (comments.Comments[i].blogOwnerID === userID) {
+                                $('#commentView').append(commentViewContentDiv, commentViewDeleteButton, commentViewPublicButton, commentViewContentEndDiv);
+                            }
+                            else {
+                                $('#commentView').append(commentViewContentDiv, commentViewContentEndDiv);
+
+                            }
+
+
+
+
+
+                        }
+
+                    });
+            }
+            function deleteButComment(event) {
+                var deletedCommentID = event.data.deletingCommentID;
+                $.ajax({
+
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/updatecomments",
+                    crossDomain: true,
+                    enctype: 'multipart/form-data',
+                    data: { commentID: deletedCommentID, removed: 'true' },
+                    beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                })
+                    .done(function (commentRemoved) {
+                        console.log(commentRemoved);
+                        $('#addingComment').hide();
+                        viewComments();
+                    });
+                console.log(deletedCommentID);
+            }
+            function updateButComment(event) {
+
+                $('#addingComment').show();
+                $('#updateCommentFormBut').show();
+                $('#sendComment').hide();
+                $('#CommentPublic').hide();
+                $('#CommentDelete').hide();
+                var updatingCommentID = event.data.updatingCommentID;
+                var updatingCommentText = event.data.updatingCommentText;
+                var updatingCommentIsPublic = event.data.updatingCommentIsPublic;
+                var updatingCommentIsRemoved = event.data.updatingCommentIsRemoved;
+                $('#commentContent').val(updatingCommentText);
+                console.log(updatingCommentID, updatingCommentText, updatingCommentIsPublic, updatingCommentIsRemoved);
+                $('#updateCommentFormBut').click(function () {
+
+                    $.ajax({
+
+                        method: "POST",
+                        url: "http://" + nodeApiUrl + ":" + urlPort + "/updatecomments",
+                        crossDomain: true,
+                        enctype: 'multipart/form-data',
+                        data: { commentID: updatingCommentID, commentText: $('#commentContent').val(), isPublic: 'true', removed: 'false' },
+                        beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                    })
+                        .done(function (commentUpdated) {
+                            console.log(commentUpdated);
+                            $('#addingComment').hide();
+
+                            $('#updateCommentFormBut').hide();
+
+
+                            viewComments();
+                        });
+
+                })
+                /*
+                 */
+                console.log(updatingCommentID);
+            }
+
+            function setPublic(event) {
+                var updatingCommentID = event.data.updatingCommentID;
+                var updatingCommentText = event.data.updatingCommentText;
+                var setCommentPublic = event.data.setCommentPublic;
+                var updatingCommentIsRemoved = event.data.updatingCommentIsRemoved;
+                var newState = "true";
+                if (setCommentPublic === 'true') {
+                    newState = 'false';
+                }
+                else {
+                    newState = 'true';
+                }
+                $.ajax({
+
+                    method: "POST",
+                    url: "http://" + nodeApiUrl + ":" + urlPort + "/updatecomments",
+                    crossDomain: true,
+                    enctype: 'multipart/form-data',
+                    data: { commentID: updatingCommentID, commentText: updatingCommentText, isPublic: newState, removed: 'false' },
+                    beforeSend: function (xhr, settings) { xhr.setRequestHeader('Authorization', 'Bearer ' + tokenUser); }
+                })
+                    .done(function (commentUpdated) {
+                        console.log(commentUpdated);
+                        $('#addingComment').hide();
+
+                        $('#updateCommentFormBut').hide();
+
+
+                        viewComments();
+                    });
+
+            }
+
+            $('#CommentPublic').change(function () {
+                if ($(this).prop('checked')) {
+                    commentisPublic = true;
+                    console.log(commentisPublic);
+                } else {
+                    commentisPublic = false;
+                    console.log(commentisPublic);
+                }
+
+            });
+            $('#CommentDelete').change(function () {
+                if ($(this).prop('checked')) {
+                    commentisRemoved = true;
+                    console.log(commentisRemoved);
+                } else {
+                    commentisRemoved = false;
+                    console.log(commentisRemoved);
+                }
+
+            });
+            $('#sendComment').click(function () {
+
+                sendComment();
+
+            });
+
+
+            //document ready end
+
+        });
+    </script>
+</head> 
+<body>
+    <div id="toolbar" class="ui-panel-fixed-toolbar navbar-light">
+        <!-- <div id="userNamep"></div>-->
+        <button id="signupBtnTool" class="btn btn-success btn-sm">Sign-Up</button>
+        <button id="signUpFbBtn" class="btn btn-primary btn-sm">Sign-Up with Facebook</button>
+        <button id="navLogin" class="btn btn-success btn-sm">LOGIN</button>
+        <button id="mainPosts" class="btn btn-outline-warning btn-sm text-black-50">All Posts</button>
+        <button id="createPostBtn" class="btn btn-sm">Create Post</button>
+        <button id="myPostsBtn" class="btn btn-sm">My Posts<span id="myPostsCount"></span></button>
+        <button id="logOutBut" class="btn btn-danger btn-sm">Log-Out-<span id="userNamep"></span></button>
+
+
+    </div>
+   
+    <div id="app" class="app">
+
+        <div id="publicPosts" class="list-group">
+
+        </div>
+        <div id="postView" class="panel">
+            <div id="postViewHeader" class="panel-heading bg-success">Panel Heading</div>
+            <div id="postViewContent" class="panel-body bg-light text-dark">Panel Content</div>
+        </div>
+        <div id="commentPanel">
+          
+            <div id="commentView" class="panel">
+                <div id="commentViewHeader" class="panel-heading bg-success">Comments Panel</div>
+            </div>
+
+            <div id="addingComment" class="form-group">
+                <label for="usr">Comment:</label>
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="commentChecked" checked id="CommentPublic"> Public ?
+                </label>
+                
+                <input type="text" class="form-control" id="commentContent">
+                <button id="sendComment" class="btn btn-success">Comment</button>
+                <button id="updateCommentFormBut" class="btn btn-success">Update Comment</button>
+            </div>
+
+
+        </div>
+
+
+        <div id="createPostForm" style="padding-top:50px;">
+            <div class="panel-heading bg-warning text-light text-center">Create New Post</div>
+            <div class="form-group">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="draftChecked" checked id="draftChecked"> Draft
+                </label>
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="commentChecked" checked id="commentChecked"> Comment ?
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="usr">Post Header:</label>
+                <input type="text" class="form-control" id="postHeader">
+            </div>
+
+            <div class="form-group">
+                <label for="comment">Content:</label>
+                <textarea class="form-control" rows="5" id="postContent"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="comment">Attach File</label>
+                <input type="file" name="sampleFile" class="form-control" id="sampleFile">
+                <br />
+                <button id="sendPost" class="btn btn-success">Submit Post</button>
+                <button id="cancelCreatePost" class="btn btn-danger">Cancel</button>
+            </div>
+
+        </div>
+        <div id="updatePostForm" style="padding-top:50px;">
+            <div class="panel-heading bg-warning text-light text-center"><span>Updating form is:<span id="updatingHeader"></span>"</span></div>
+
+            <div class="form-group">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="draftChecked" checked id="draftCheckedUpdate"> Draft
+                </label>
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="commentCheckedUpdate" checked id="commentCheckedUpdate"> Comment?
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="usr">Post Header:</label>
+                <input type="text" class="form-control" id="postUpdateHeader">
+            </div>
+
+            <div class="form-group">
+                <label for="comment">Content:</label>
+                <textarea class="form-control" rows="5" id="postUpdateContent"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="comment">Attach File</label>
+                <input type="file" name="sampleFile" class="form-control" id="sampleFileUpdate">
+                <br />
+                <button id="updatePost" class="btn btn-success">Update Post</button>
+                <button id="cancelUpdatePost" class="btn btn-warning">Cancel</button>
+                <button id="DeletePost" class="btn btn-danger">Delete</button>
+            </div>
+
+        </div>
+        <div id="postCreatedMessage"></div>
+        <div>
+            <div id="myPostsDiv" class="list-group">
+
+            </div>
+        </div>
+
+        <div id="myDiv" class="center-div">
+            <form id="signUpPanel">
+                <div class="panel panel-default">
+                    <div class="panel-heading bg-primary text-light text-center">Sign - Up</div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label for="usr">Name:</label>
+                            <input type="text" class="form-control" required id="usernameReg" name="name="mail"">
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" >E-Mail:</label>
+                            <input type="email" autofocus  class="form-control" required id="emailReg" name="email">
+                            <div class="valid-feedback">
+                                Looks good!
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-2">Password:</label>
+                            <input type="password" class="form-control" required id="passwordReg" name="passwordReg">
+                        </div>
+
+
+                    </div>
+                </div>
+                <button id="letMeIn"   class="btn btn-success">LEt ME IN</button>
+            </form>
+            
+            <div class="panel panel-default" id="signInPanel">
+                <div class="panel-heading bg-primary text-light text-center">Sign - In</div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <label for="usr">E-Mail:</label>
+                        <input type="text" class="form-control" id="username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pwd">Password:</label>
+                        <input type="password" class="form-control" required id="password">
+                        <br />
+                        <button id="loginBut" class="btn btn-success">LOGIN</button>
+                    </div>
+                </div>
+            </div>
+               
+        </div>
+
+    </div>
+
+    <div id="newuserName">
+
+    </div>
+    <div id="userdetail">
+
+    </div>
+    <!--<script type="text/javascript" src="cordova.js"></script>-->
+    <!--<script type="text/javascript" src="scripts/platformOverrides.js"></script>-->
+    <!-- <script type="text/javascript" src="scripts/index.js"></script>-->
+
+</body>
+
+</html>
