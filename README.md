@@ -19,7 +19,7 @@ https://nodejs.org/en/download/
 # run from terminal or CLI ;
   npm init (enter or fill it)
 # intsalling express and other packages
-  npm install express --save
+  npm install express --save<br>
   npm install jsonwebtoken --save
   npm install passport --save (its for local strategy)
   npm install cors --save (for cross borwser)
